@@ -328,6 +328,7 @@ message LayerParameter {
   
   optional SliceMapParameter slice_map_param = 86313;
   optional PReLUParameter prelu_param = 86315;
+  optional PairCoordinateDataParameter pair_coordinate_param = 86314;
 }
 
 // Message that stores parameters used to apply transformation
@@ -942,4 +943,14 @@ message PReLUParameter {
   optional float init_value = 1 [default = 0.25];
   // Whether or not slope paramters are shared across channels.
   optional bool channel_shared = 2 [default = false];
+}
+
+// Message that stores parameters used by PairCoordinateDataParameter
+message PairCoordinateDataParameter {
+  optional string source = 1;
+  optional uint32 batch_size = 2;
+  optional uint32 rand_seed = 3;
+  optional bool shuffle = 4 [default = false];
+  optional bool mirror = 5 [default = false];
+  optional string root_folder = 6 [default = ""];
 }
