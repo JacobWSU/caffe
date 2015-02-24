@@ -75,7 +75,7 @@ message NetParameter {
 // NOTE
 // Update the next available ID when you add a new SolverParameter field.
 //
-// SolverParameter next available ID: 37 (last added: iter_size)
+// SolverParameter next available ID: 38 (last added: iter_size)
 message SolverParameter {
   //////////////////////////////////////////////////////////////////////////////
   // Specifying the train and test networks
@@ -129,7 +129,7 @@ message SolverParameter {
   optional int32 average_loss = 33 [default = 1];
   optional int32 max_iter = 7; // the maximum number of iterations
   // accumulate gradients over `iter_size` x `batch_size` instances
-  optional int32 iter_size = 36 [default = 1];
+  optional int32 iter_size = 37 [default = 1];
   optional string lr_policy = 8; // The learning rate decay policy.
   optional float gamma = 9; // The parameter to compute the learning rate.
   optional float power = 10; // The parameter to compute the learning rate.
@@ -146,6 +146,11 @@ message SolverParameter {
   // Set clip_gradients to >= 0 to clip parameter gradients to that L2 norm,
   // whenever their actual L2 norm is larger.
   optional float clip_gradients = 35 [default = -1];
+
+  // Share blobs that have the same name over nets (training net and testing
+  // nets). Default behavier, different nets use different blobs independently,
+  // leads to much memory consumptions.
+  optional bool share_blobs = 36 [default = false];
 
   optional int32 snapshot = 14 [default = 0]; // The snapshot interval
   optional string snapshot_prefix = 15; // The prefix for the snapshot.
