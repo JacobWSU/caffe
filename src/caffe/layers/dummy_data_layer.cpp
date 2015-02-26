@@ -72,8 +72,11 @@ void DummyDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
         (param.width_size() == 1) ? param.width(0) : param.width(i);
     top[i]->Reshape(num, channels, height, width);
   }
-  // Run Forward once, with refill_ inverted, to fill the constant Blobs.
-  this->Forward(bottom, top);
+  refill_constant_ = param.refill_constant();
+  if (!refill_constant_) {
+    // Run Forward once, with refill_ inverted, to fill the constant Blobs.
+    this->Forward(bottom, top);
+  }
   // Invert the inverted refill_ values to refill the desired (non-constant)
   // Blobs in every usual forward pass.
   for (int i = 0; i < refill_.size(); ++i) {
@@ -84,9 +87,18 @@ void DummyDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void DummyDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
+  const DummyDataParameter& param = this->layer_param_.dummy_data_param();
   for (int i = 0; i < top.size(); ++i) {
     const int filler_id = (fillers_.size() > 1) ? i : 0;
-    if (refill_[filler_id]) {
+    const int num = (param.num_size() == 1) ? param.num(0) : param.num(i);
+    const int channels =
+        (param.channels_size() == 1) ? param.channels(0) : param.channels(i);
+    const int height =
+        (param.height_size() == 1) ? param.height(0) : param.height(i);
+    const int width =
+        (param.width_size() == 1) ? param.width(0) : param.width(i);
+    top[i]->Reshape(num, channels, height, width);
+    if (refill_constant_ || refill_[filler_id]) {
       fillers_[filler_id]->Fill(top[i]);
     }
   }
