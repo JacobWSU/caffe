@@ -152,6 +152,9 @@ message SolverParameter {
   // leads to much memory consumptions.
   optional bool share_blobs = 36 [default = false];
 
+  // Force momentum history computation in CPU in order to save memory
+  optional bool force_cpu_momentum = 38 [default = false];
+
   optional int32 snapshot = 14 [default = 0]; // The snapshot interval
   optional string snapshot_prefix = 15; // The prefix for the snapshot.
   // whether to snapshot diff in the results or not. Snapshotting diff will help
