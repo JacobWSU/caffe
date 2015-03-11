@@ -146,6 +146,12 @@ void Caffe::SetDevice(const int device_id) {
       cluster_seedgen()));
 }
 
+int Caffe::GetDevice() {
+  int current_device;
+  CUDA_CHECK(cudaGetDevice(&current_device));
+  return current_device;
+}
+
 void Caffe::DeviceQuery() {
   cudaDeviceProp prop;
   int device;
