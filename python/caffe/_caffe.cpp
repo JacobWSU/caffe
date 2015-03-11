@@ -208,6 +208,24 @@ bp::object Blob_Reshape(bp::tuple args, bp::dict kwargs) {
   return bp::object();
 }
 
+#ifndef CPU_ONLY
+bp::object Blob_GpuDataPtr(bp::tuple args, bp::dict kwargs) {
+  if (bp::len(kwargs) > 0) {
+    throw std::runtime_error("Blob.gpu_data_ptr takes no kwargs");
+  }
+  Blob<Dtype>* self = bp::extract<Blob<Dtype>*>(args[0]);
+  return bp::object((size_t)(self->mutable_gpu_data()));
+}
+
+bp::object Blob_GpuDiffPtr(bp::tuple args, bp::dict kwargs) {
+  if (bp::len(kwargs) > 0) {
+    throw std::runtime_error("Blob.gpu_diff_ptr takes no kwargs");
+  }
+  Blob<Dtype>* self = bp::extract<Blob<Dtype>*>(args[0]);
+  return bp::object((size_t)(self->mutable_gpu_diff()));
+}
+#endif
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SolveOverloads, Solve, 0, 1);
 
 BOOST_PYTHON_MODULE(_caffe) {
@@ -261,6 +279,10 @@ BOOST_PYTHON_MODULE(_caffe) {
         &Blob<Dtype>::count))
     .add_property("shape", bp::raw_function(&Blob_Shape))
     .def("reshape",           bp::raw_function(&Blob_Reshape))
+#ifndef CPU_ONLY
+    .add_property("gpu_data_ptr", bp::raw_function(&Blob_GpuDataPtr))
+    .add_property("gpu_diff_ptr", bp::raw_function(&Blob_GpuDiffPtr))
+#endif
     .add_property("data",     bp::make_function(&Blob<Dtype>::mutable_cpu_data,
           NdarrayCallPolicies()))
     .add_property("diff",     bp::make_function(&Blob<Dtype>::mutable_cpu_diff,
