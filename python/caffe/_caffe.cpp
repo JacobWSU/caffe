@@ -35,6 +35,13 @@ const int NPY_DTYPE = NPY_FLOAT32;
 // Selecting mode.
 void set_mode_cpu() { Caffe::set_mode(Caffe::CPU); }
 void set_mode_gpu() { Caffe::set_mode(Caffe::GPU); }
+// Checking current mode.
+bool check_mode_cpu() { return Caffe::mode() == Caffe::CPU; }
+bool check_mode_gpu() { return Caffe::mode() == Caffe::GPU; }
+#ifndef CPU_ONLY
+// Cuda num threads
+int get_cuda_num_threads() { return CAFFE_CUDA_NUM_THREADS; }
+#endif
 
 // For convenience, check that input files can be opened, and raise an
 // exception that boost will send to Python if not (caffe could still crash
@@ -176,6 +183,19 @@ struct NdarrayCallPolicies : public bp::default_call_policies {
   }
 };
 
+bp::object Blob_Shape(bp::tuple args, bp::dict kwargs) {
+  if (bp::len(kwargs) > 0) {
+    throw std::runtime_error("Blob.shape takes no kwargs");
+  }
+  Blob<Dtype>* self = bp::extract<Blob<Dtype>*>(args[0]);
+  const vector<int> &shape = self->shape();
+  bp::list shape_list;
+  BOOST_FOREACH(int s, shape) {
+    shape_list.append(s);
+  }
+  return bp::tuple(shape_list);
+}
+
 bp::object Blob_Reshape(bp::tuple args, bp::dict kwargs) {
   if (bp::len(kwargs) > 0) {
     throw std::runtime_error("Blob.reshape takes no kwargs");
@@ -190,6 +210,24 @@ bp::object Blob_Reshape(bp::tuple args, bp::dict kwargs) {
   return bp::object();
 }
 
+#ifndef CPU_ONLY
+bp::object Blob_GpuDataPtr(bp::tuple args, bp::dict kwargs) {
+  if (bp::len(kwargs) > 0) {
+    throw std::runtime_error("Blob.gpu_data_ptr takes no kwargs");
+  }
+  Blob<Dtype>* self = bp::extract<Blob<Dtype>*>(args[0]);
+  return bp::object((size_t)(self->mutable_gpu_data()));
+}
+
+bp::object Blob_GpuDiffPtr(bp::tuple args, bp::dict kwargs) {
+  if (bp::len(kwargs) > 0) {
+    throw std::runtime_error("Blob.gpu_diff_ptr takes no kwargs");
+  }
+  Blob<Dtype>* self = bp::extract<Blob<Dtype>*>(args[0]);
+  return bp::object((size_t)(self->mutable_gpu_diff()));
+}
+#endif
+
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SolveOverloads, Solve, 0, 1);
 
 BOOST_PYTHON_MODULE(_caffe) {
@@ -198,7 +236,14 @@ BOOST_PYTHON_MODULE(_caffe) {
   // Caffe utility functions
   bp::def("set_mode_cpu", &set_mode_cpu);
   bp::def("set_mode_gpu", &set_mode_gpu);
+  bp::def("check_mode_cpu", &check_mode_cpu);
+  bp::def("check_mode_gpu", &check_mode_gpu);
   bp::def("set_device", &Caffe::SetDevice);
+  bp::def("get_device", &Caffe::GetDevice);
+#ifndef CPU_ONLY
+  bp::def("get_cuda_num_threads", &get_cuda_num_threads);
+  bp::def("get_blocks", &CAFFE_GET_BLOCKS);
+#endif
 
   bp::class_<Net<Dtype>, shared_ptr<Net<Dtype> >, boost::noncopyable >("Net",
     bp::no_init)
@@ -236,7 +281,12 @@ BOOST_PYTHON_MODULE(_caffe) {
     .add_property("width",    &Blob<Dtype>::width)
     .add_property("count",    static_cast<int (Blob<Dtype>::*)() const>(
         &Blob<Dtype>::count))
+    .add_property("shape", bp::raw_function(&Blob_Shape))
     .def("reshape",           bp::raw_function(&Blob_Reshape))
+#ifndef CPU_ONLY
+    .add_property("gpu_data_ptr", bp::raw_function(&Blob_GpuDataPtr))
+    .add_property("gpu_diff_ptr", bp::raw_function(&Blob_GpuDiffPtr))
+#endif
     .add_property("data",     bp::make_function(&Blob<Dtype>::mutable_cpu_data,
           NdarrayCallPolicies()))
     .add_property("diff",     bp::make_function(&Blob<Dtype>::mutable_cpu_diff,
