@@ -53,5 +53,7 @@ def caffe_cuda_context():
         raise ValueError(
             "PyCuda cannot be used if Caffe is not in GPU mode.")
     ctx = cuda.Context.attach()
-    yield
-    ctx.detach()
+    try:
+        yield
+    finally:
+        ctx.detach()
