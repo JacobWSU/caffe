@@ -41,7 +41,9 @@ bool check_mode_gpu() { return Caffe::mode() == Caffe::GPU; }
 #ifndef CPU_ONLY
 // Cuda num threads
 int get_cuda_num_threads() { return CAFFE_CUDA_NUM_THREADS; }
-bp::object cublas_handle() { return bp::object((size_t)Caffe::cublas_handle()); }
+bp::object cublas_handle() {
+  return bp::object((size_t)Caffe::cublas_handle());
+}
 #endif
 
 // For convenience, check that input files can be opened, and raise an
