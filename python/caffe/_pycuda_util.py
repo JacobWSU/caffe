@@ -34,6 +34,7 @@ caffe_include_dirs = [
         os.path.join(
             os.path.dirname(__file__), '..', '..', 'include'))]
 
+
 @contextmanager
 def caffe_cuda_context():
     """Borrow CUDA context from CAFFE duraing `with` statement. See
@@ -57,3 +58,16 @@ def caffe_cuda_context():
         yield
     finally:
         ctx.detach()
+
+
+class CaffeCudaContext:
+    """See doc of `caffe_cuda_context`"""
+    def __init__(self):
+        import caffe
+        if not caffe.check_mode_gpu():
+            raise ValueError(
+                "PyCuda cannot be used if Caffe is not in GPU mode.")
+        self.ctx_ = cuda.Context.attach()
+
+    def __del__(self):
+        self.ctx_.detach()
